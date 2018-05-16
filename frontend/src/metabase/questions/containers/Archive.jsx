@@ -6,10 +6,20 @@ import HeaderWithBack from "metabase/components/HeaderWithBack";
 import SearchHeader from "metabase/components/SearchHeader";
 import ArchivedItem from "../../components/ArchivedItem";
 
-import { loadEntities, setArchived, setSearchText } from "../questions";
+import {
+  loadEntities,
+  setArchived as setQuestionArchived,
+  setSearchText,
+} from "../questions";
 import { setCollectionArchived } from "../collections";
 import { getVisibleEntities, getSearchText } from "../selectors";
 import { getUserIsAdmin } from "metabase/selectors/user";
+
+import {
+  fetchArchivedDashboards,
+  setArchived as setDashboardArchived,
+} from "metabase/dashboards/dashboards";
+import { getArchivedDashboards } from "metabase/dashboards/selectors";
 
 import visualizations from "metabase/visualizations";
 
@@ -25,15 +35,18 @@ const mapStateToProps = (state, props) => ({
       entityType: "collections",
       entityQuery: { archived: true },
     }) || [],
+  archivedDashboards: getArchivedDashboards(state) || [],
 
   isAdmin: getUserIsAdmin(state, props),
 });
 
 const mapDispatchToProps = {
   loadEntities,
+  fetchArchivedDashboards,
   setSearchText,
-  setArchived,
+  setQuestionArchived,
   setCollectionArchived,
+  setDashboardArchived,
 };
 
 @connect(mapStateToProps, mapDispatchToProps)
@@ -44,13 +57,24 @@ export default class Archive extends Component {
   loadEntities() {
     this.props.loadEntities("cards", { f: "archived" });
     this.props.loadEntities("collections", { archived: true });
+    this.props.fetchArchivedDashboards();
   }
   render() {
-    const { archivedCards, archivedCollections, isAdmin } = this.props;
+    const {
+      archivedCards,
+      archivedCollections,
+      archivedDashboards,
+      isAdmin,
+    } = this.props;
+    console.log("archivedDashboards", archivedDashboards);
     const items = [
       ...archivedCollections.map(collection => ({
         type: "collection",
         ...collection,
+      })),
+      ...archivedDashboards.map(dashboard => ({
+        type: "dashboard",
+        ...dashboard,
       })),
       ...archivedCards.map(card => ({ type: "card", ...card })),
     ]; //.sort((a,b) => a.updated_at.valueOf() - b.updated_at.valueOf()))
@@ -88,7 +112,19 @@ export default class Archive extends Component {
                   icon={visualizations.get(item.display).iconName}
                   isAdmin={isAdmin}
                   onUnarchive={async () => {
-                    await this.props.setArchived(item.id, false, true);
+                    await this.props.setQuestionArchived(item.id, false, true);
+                    this.loadEntities();
+                  }}
+                />
+              ) : item.type === "dashboard" ? (
+                <ArchivedItem
+                  key={item.type + item.id}
+                  name={item.name}
+                  type="dashboard"
+                  icon="dashboard"
+                  isAdmin={isAdmin}
+                  onUnarchive={async () => {
+                    await this.props.setDashboardArchived(item.id, false, true);
                     this.loadEntities();
                   }}
                 />

@@ -270,14 +270,9 @@ class CollectionLanding extends React.Component {
               <EntityMenu
                 items={[
                   {
-                    title: t`View the question archive`,
+                    title: t`View the archive`,
                     icon: "viewArchive",
-                    link: `/questions/archive/`,
-                  },
-                  {
-                    title: t`View the dashboard archive`,
-                    icon: "viewArchive",
-                    link: `/dashboards/archive`,
+                    link: `/archive/`,
                   },
                 ]}
                 triggerIcon="burger"

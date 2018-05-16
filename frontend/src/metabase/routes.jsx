@@ -250,13 +250,6 @@ export const getRoutes = store => (
           <Route path=":dbId" component={TableBrowser} />
         </Route>
 
-        {/* DASHBOARD LIST */}
-        <Route
-          path="/dashboards/archive"
-          title={t`Dashboards`}
-          component={DashboardsArchive}
-        />
-
         {/* INDIVIDUAL DASHBOARDS */}
 
         <Route path="/auto/dashboard/*" component={AutomaticDashboardApp} />
@@ -268,7 +261,7 @@ export const getRoutes = store => (
         <Route path=":collectionId" component={CollectionEdit} />
       </Route>
 
-      <Route path="questions/archive" title={t`Archive`} component={Archive} />
+      <Route path="/archive" title={t`Archive`} component={Archive} />
 
       {/* REFERENCE */}
       <Route path="/reference" title={`Data Reference`}>
