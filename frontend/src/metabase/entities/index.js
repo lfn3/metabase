@@ -8,3 +8,4 @@ export questions from "./questions";
 export segments from "./segments";
 export tables from "./tables";
 export users from "./users";
+export search from "./search";

@@ -11,7 +11,7 @@ import { setRequestState } from "metabase/redux/requests";
 import { GET, PUT, POST, DELETE } from "metabase/lib/api";
 
 import { createSelector } from "reselect";
-import { normalize, schema } from "normalizr";
+import { normalize, denormalize, schema } from "normalizr";
 import { getIn } from "icepick";
 
 // entity defintions export the following properties (`name`, and `api` or `path` are required)
@@ -50,8 +50,6 @@ export type Entity = {
   actions: { [name: string]: any },
   reducers: { [name: string]: Reducer },
   selectors: {
-    getEntities: any,
-    getEntitiesIdsList: any,
     getList: any,
     getObject: any,
     getLoading: any,
@@ -71,6 +69,9 @@ export function createEntity(def: EntityDefinition): Entity {
   if (!entity.schema) {
     entity.schema = new schema.Entity(entity.name);
   }
+  if (!entity.listSchema) {
+    entity.listSchema = [entity.schema];
+  }
   if (!entity.getName) {
     entity.getName = object => object.name;
   }
@@ -86,12 +87,21 @@ export function createEntity(def: EntityDefinition): Entity {
     };
   }
 
+  function idForQuery(query) {
+    return JSON.stringify(query || null);
+  }
+
   // ACITON TYPES
   const CREATE_ACTION = `metabase/entities/${entity.name}/CREATE`;
   const FETCH_ACTION = `metabase/entities/${entity.name}/FETCH`;
   const UPDATE_ACTION = `metabase/entities/${entity.name}/UPDATE`;
   const DELETE_ACTION = `metabase/entities/${entity.name}/DELETE`;
   const FETCH_LIST_ACTION = `metabase/entities/${entity.name}/FETCH_LIST`;
+
+  const getObjectStatePath = entityId => ["entities", entity.name, entityId];
+
+  const getListStatePath = query =>
+    ["entities", entity.name + "_list"].concat(idForQuery(query));
 
   // ACTION CREATORS
   entity.actions = {
@@ -125,8 +135,8 @@ export function createEntity(def: EntityDefinition): Entity {
           dispatch,
           getState,
           reload,
-          requestStatePath: ["entities", entity.name, entityObject.id],
-          existingStatePath: ["entities", entity.name, entityObject.id],
+          requestStatePath: getObjectStatePath(entityObject.id),
+          existingStatePath: getObjectStatePath(entityObject.id),
           getData: async () =>
             normalize(
               await entity.api.get({ id: entityObject.id }),
@@ -138,7 +148,7 @@ export function createEntity(def: EntityDefinition): Entity {
     update: createThunkAction(
       UPDATE_ACTION,
       entityObject => async (dispatch, getState) => {
-        const statePath = ["entities", entity.name, entityObject.id, "update"];
+        const statePath = [...getObjectStatePath(entityObject.id), "update"];
         try {
           dispatch(setRequestState({ statePath, state: "LOADING" }));
           const result = normalize(
@@ -158,7 +168,7 @@ export function createEntity(def: EntityDefinition): Entity {
     delete: createThunkAction(
       DELETE_ACTION,
       entityObject => async (dispatch, getState) => {
-        const statePath = ["entities", entity.name, entityObject.id, "delete"];
+        const statePath = [...getObjectStatePath(entityObject.id), "delete"];
         try {
           dispatch(setRequestState({ statePath, state: "LOADING" }));
           await entity.api.delete({ id: entityObject.id });
@@ -177,42 +187,66 @@ export function createEntity(def: EntityDefinition): Entity {
 
     fetchList: createThunkAction(
       FETCH_LIST_ACTION,
-      (query = {}, reload = false) => (dispatch, getState) =>
+      (query = null, reload = false) => (dispatch, getState) =>
         fetchData({
           dispatch,
           getState,
           reload,
-          requestStatePath: ["entities", entity.name + "_list"], // FIXME: different path depending on query?
-          existingStatePath: ["entities", entity.name + "_list"], // FIXME: different path depending on query?
-          getData: async () =>
-            normalize(await entity.api.list(query), [entity.schema]),
+          requestStatePath: getListStatePath(query),
+          existingStatePath: getListStatePath(query),
+          getData: async () => {
+            const { result, entities } = normalize(
+              await entity.api.list(query || {}),
+              entity.listSchema,
+            );
+            return { result, entities, query };
+          },
         }),
     ),
   };
 
   // SELECTORS
-  const getEntities = state => state.entities[entity.name];
-  const getEntitiesIdsList = state => state.entities[`${entity.name}_list`];
+
+  const getEntities = state => state.entities;
+
+  // OBJECT SELECTORS
+
   const getEntityId = (state, props) =>
     (props.params && props.params.entityId) || props.entityId;
-  const getList = createSelector(
-    [getEntities, getEntitiesIdsList],
-    (entities, entityIds) => entityIds && entityIds.map(id => entities[id]),
-  );
+
   const getObject = createSelector(
     [getEntities, getEntityId],
-    (entities, entityId) => entities[entityId],
+    (entities, entityId) => denormalize(entityId, entity.schema, entities),
   );
 
+  // LIST SELECTORS
+
+  const getEntityQuery = (state, props) => idForQuery(props.query);
+
+  const getEntityLists = createSelector(
+    [getEntities],
+    entities => entities[`${entity.name}_list`],
+  );
+
+  const getEntityIds = createSelector(
+    [getEntityQuery, getEntityLists],
+    (query, lists) => lists[query],
+  );
+
+  const getList = createSelector(
+    [getEntities, getEntityIds],
+    (entities, entityIds) =>
+      denormalize(entityIds, entity.listSchema, entities),
+  );
+
+  // REQUEST STATE SELECTORS
+
   const getRequestState = (state, props = {}) => {
-    const path = ["requests", "states", "entities"];
-    if (props.entityId != null) {
-      path.push(entity.name, props.entityId);
-    } else {
-      path.push(entity.name + "_list");
-    }
-    path.push(props.requestType || "fetch");
-    return getIn(state, path);
+    const path =
+      props.entityId != null
+        ? getObjectStatePath(props.entityId)
+        : getListStatePath(props.query);
+    return getIn(state, ["requests", "states", ...path, "fetch"]);
   };
   const getLoading = createSelector(
     [getRequestState],
@@ -224,8 +258,6 @@ export function createEntity(def: EntityDefinition): Entity {
   );
 
   entity.selectors = {
-    getEntities,
-    getEntitiesIdsList,
     getList,
     getObject,
     getLoading,
@@ -242,19 +274,31 @@ export function createEntity(def: EntityDefinition): Entity {
     def.reducer,
   );
 
-  entity.reducers[entity.name + "_list"] = (state = null, action) => {
-    if (action.error) {
+  entity.reducers[entity.name + "_list"] = (
+    state = {},
+    { type, error, payload },
+  ) => {
+    if (error) {
       return state;
     }
-    if (action.type === FETCH_LIST_ACTION) {
-      return action.payload.result || state;
-    } else if (action.type === CREATE_ACTION) {
-      return state && state.concat([action.payload.result]);
-    } else if (action.type === DELETE_ACTION) {
-      return state && state.filter(id => id !== action.payload.result);
-    } else {
-      return state;
+    if (type === FETCH_LIST_ACTION) {
+      if (payload.result) {
+        return {
+          ...state,
+          [idForQuery(payload.query)]: payload.result,
+        };
+      }
+      // NOTE: only add/remove from the "default" list (no query)
+      // TODO: just remove this entirely?
+    } else if (type === CREATE_ACTION && state[""]) {
+      return { ...state, "": state[""].concat([payload.result]) };
+    } else if (type === DELETE_ACTION && state[""]) {
+      return {
+        ...state,
+        "": state[""].filter(id => id !== payload.result),
+      };
     }
+    return state;
   };
 
   return entity;

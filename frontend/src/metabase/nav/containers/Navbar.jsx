@@ -6,7 +6,7 @@ import { Box, Flex } from "rebass";
 
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { Link } from "react-router";
+import { Link, withRouter } from "react-router";
 
 import { createDashboard } from "metabase/dashboards/dashboards";
 
@@ -52,7 +52,8 @@ const AdminNavItem = ({ name, path, currentPath }) => (
   </li>
 );
 
-/*
+@withRouter
+@connect(null, { push })
 class SearchBar extends React.Component {
   state = {
     active: false,
@@ -64,6 +65,7 @@ class SearchBar extends React.Component {
         <Icon name="search" />
         <input
           type="text"
+          defaultValue={this.props.location.query.q}
           placeholder="Search for anything..."
           className="input bg-transparent borderless"
           onClick={() => this.setState({ active: true })}
@@ -71,12 +73,19 @@ class SearchBar extends React.Component {
             width: this.state.active ? 600 : 320,
             maxWidth: 600,
           }}
+          onKeyPress={e => {
+            if (e.key === "Enter") {
+              this.props.push({
+                pathname: "search",
+                query: { q: e.target.value },
+              });
+            }
+          }}
         />
       </Flex>
     );
   }
 }
-*/
 
 const MODAL_NEW_DASHBOARD = "MODAL_NEW_DASHBOARD";
 const MODAL_NEW_COLLECTION = "MODAL_NEW_COLLECTION";
@@ -190,7 +199,7 @@ export default class Navbar extends Component {
           </Link>
         </Box>
         <Box my={1} p={1} className="wrapper lg-wrapper--trim">
-          {/* <SearchBar /> */}
+          <SearchBar />
         </Box>
         <Flex ml="auto" align="center">
           <PopoverWithTrigger

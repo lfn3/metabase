@@ -6,6 +6,8 @@ import HeaderWithBack from "metabase/components/HeaderWithBack";
 import SearchHeader from "metabase/components/SearchHeader";
 import ArchivedItem from "../../components/ArchivedItem";
 
+import EntityListLoader from "metabase/entities/containers/EntityListLoader";
+
 import {
   loadEntities,
   setArchived as setQuestionArchived,
@@ -25,24 +27,10 @@ import visualizations from "metabase/visualizations";
 
 const mapStateToProps = (state, props) => ({
   searchText: getSearchText(state, props),
-  archivedCards:
-    getVisibleEntities(state, {
-      entityType: "cards",
-      entityQuery: { f: "archived" },
-    }) || [],
-  archivedCollections:
-    getVisibleEntities(state, {
-      entityType: "collections",
-      entityQuery: { archived: true },
-    }) || [],
-  archivedDashboards: getArchivedDashboards(state) || [],
-
   isAdmin: getUserIsAdmin(state, props),
 });
 
 const mapDispatchToProps = {
-  loadEntities,
-  fetchArchivedDashboards,
   setSearchText,
   setQuestionArchived,
   setCollectionArchived,
@@ -51,14 +39,6 @@ const mapDispatchToProps = {
 
 @connect(mapStateToProps, mapDispatchToProps)
 export default class Archive extends Component {
-  componentWillMount() {
-    this.loadEntities();
-  }
-  loadEntities() {
-    this.props.loadEntities("cards", { f: "archived" });
-    this.props.loadEntities("collections", { archived: true });
-    this.props.fetchArchivedDashboards();
-  }
   render() {
     const {
       archivedCards,
@@ -66,19 +46,6 @@ export default class Archive extends Component {
       archivedDashboards,
       isAdmin,
     } = this.props;
-    console.log("archivedDashboards", archivedDashboards);
-    const items = [
-      ...archivedCollections.map(collection => ({
-        type: "collection",
-        ...collection,
-      })),
-      ...archivedDashboards.map(dashboard => ({
-        type: "dashboard",
-        ...dashboard,
-      })),
-      ...archivedCards.map(card => ({ type: "card", ...card })),
-    ]; //.sort((a,b) => a.updated_at.valueOf() - b.updated_at.valueOf()))
-
     return (
       <div className="px4 pt3">
         <div className="flex align-center mb2">
@@ -89,47 +56,66 @@ export default class Archive extends Component {
           setSearchText={this.props.setSearchText}
         />
         <div>
-          {items.map(
-            item =>
-              item.type === "collection" ? (
-                <ArchivedItem
-                  key={item.type + item.id}
-                  name={item.name}
-                  type="collection"
-                  icon="collection"
-                  color={item.color}
-                  isAdmin={isAdmin}
-                  onUnarchive={async () => {
-                    await this.props.setCollectionArchived(item.id, false);
-                    this.loadEntities();
-                  }}
-                />
-              ) : item.type === "card" ? (
-                <ArchivedItem
-                  key={item.type + item.id}
-                  name={item.name}
-                  type="card"
-                  icon={visualizations.get(item.display).iconName}
-                  isAdmin={isAdmin}
-                  onUnarchive={async () => {
-                    await this.props.setQuestionArchived(item.id, false, true);
-                    this.loadEntities();
-                  }}
-                />
-              ) : item.type === "dashboard" ? (
-                <ArchivedItem
-                  key={item.type + item.id}
-                  name={item.name}
-                  type="dashboard"
-                  icon="dashboard"
-                  isAdmin={isAdmin}
-                  onUnarchive={async () => {
-                    await this.props.setDashboardArchived(item.id, false, true);
-                    this.loadEntities();
-                  }}
-                />
-              ) : null,
-          )}
+          <EntityListLoader entityType="search" query={{ archived: true }}>
+            {({ list, reload }) =>
+              list.filter(item => true).map(
+                item =>
+                  item.type === "collection" ? (
+                    <ArchivedItem
+                      key={item.type + item.id}
+                      name={item.name}
+                      type="collection"
+                      icon="collection"
+                      color={item.color}
+                      isAdmin={isAdmin}
+                      onUnarchive={async () => {
+                        await this.props.setCollectionArchived(item.id, false);
+                        reload();
+                      }}
+                    />
+                  ) : item.type === "question" ? (
+                    <ArchivedItem
+                      key={item.type + item.id}
+                      name={item.name}
+                      type="question"
+                      icon={visualizations.get(item.display).iconName}
+                      isAdmin={isAdmin}
+                      onUnarchive={async () => {
+                        await this.props.setQuestionArchived(
+                          item.id,
+                          false,
+                          true,
+                        );
+                        reload();
+                      }}
+                    />
+                  ) : item.type === "dashboard" ? (
+                    <ArchivedItem
+                      key={item.type + item.id}
+                      name={item.name}
+                      type="dashboard"
+                      icon="dashboard"
+                      isAdmin={isAdmin}
+                      onUnarchive={async () => {
+                        await this.props.setDashboardArchived(
+                          item.id,
+                          false,
+                          true,
+                        );
+                        reload();
+                      }}
+                    />
+                  ) : (
+                    <ArchivedItem
+                      key={item.type + item.id}
+                      name={item.name}
+                      type="unknown"
+                      icon="unknown"
+                    />
+                  ),
+              )
+            }
+          </EntityListLoader>
         </div>
       </div>
     );

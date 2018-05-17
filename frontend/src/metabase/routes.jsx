@@ -23,7 +23,6 @@ import PasswordResetApp from "metabase/auth/containers/PasswordResetApp.jsx";
 import GoogleNoAccount from "metabase/auth/components/GoogleNoAccount.jsx";
 
 /* Dashboards */
-import DashboardsArchive from "metabase/dashboards/containers/DashboardsArchive";
 import DashboardApp from "metabase/dashboard/containers/DashboardApp";
 import AutomaticDashboardApp from "metabase/dashboard/containers/AutomaticDashboardApp";
 
@@ -114,6 +113,7 @@ import DashboardMoveModal from "metabase/dashboard/components/DashboardMoveModal
 import { ModalRoute } from "metabase/hoc/ModalRoute";
 
 import CollectionLanding from "metabase/components/CollectionLanding";
+import SearchApp from "metabase/home/containers/SearchApp";
 
 const MetabaseIsSetup = UserAuthWrapper({
   predicate: authData => !authData.hasSetupToken,
@@ -213,6 +213,8 @@ export const getRoutes = store => (
 
         <Route path="/explore" component={PostSetupApp} />
         <Route path="/explore/:databaseId" component={PostSetupApp} />
+
+        <Route path="search" component={SearchApp} />
 
         <Route path="collection/:collectionId" component={CollectionLanding}>
           <ModalRoute path="archive" modal={ArchiveCollectionModal} />

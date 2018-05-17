@@ -19,15 +19,16 @@ import CollectionItemsLoader from "metabase/components/CollectionItemsLoader";
 import CollectionEmptyState from "metabase/components/CollectionEmptyState";
 
 import EntityMenu from "metabase/components/EntityMenu";
-
 import LandingNav from "metabase/components/LandingNav";
+
+import Collections from "metabase/entities/collections";
 
 // TODO - this should be a selector
 const mapStateToProps = (state, props) => ({
   currentCollection:
-    (state.entities.collections &&
-      state.entities.collections[props.params.collectionId]) ||
-    {},
+    Collections.selectors.getObject(state, {
+      entityId: props.params.collectionId,
+    }) || {},
 });
 
 const Card = styled.div`
