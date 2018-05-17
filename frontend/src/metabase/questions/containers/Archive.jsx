@@ -9,19 +9,14 @@ import ArchivedItem from "../../components/ArchivedItem";
 import EntityListLoader from "metabase/entities/containers/EntityListLoader";
 
 import {
-  loadEntities,
   setArchived as setQuestionArchived,
   setSearchText,
 } from "../questions";
 import { setCollectionArchived } from "../collections";
-import { getVisibleEntities, getSearchText } from "../selectors";
+import { getSearchText } from "../selectors";
 import { getUserIsAdmin } from "metabase/selectors/user";
 
-import {
-  fetchArchivedDashboards,
-  setArchived as setDashboardArchived,
-} from "metabase/dashboards/dashboards";
-import { getArchivedDashboards } from "metabase/dashboards/selectors";
+import { setArchived as setDashboardArchived } from "metabase/dashboards/dashboards";
 
 import visualizations from "metabase/visualizations";
 
@@ -40,12 +35,7 @@ const mapDispatchToProps = {
 @connect(mapStateToProps, mapDispatchToProps)
 export default class Archive extends Component {
   render() {
-    const {
-      archivedCards,
-      archivedCollections,
-      archivedDashboards,
-      isAdmin,
-    } = this.props;
+    const { isAdmin } = this.props;
     return (
       <div className="px4 pt3">
         <div className="flex align-center mb2">

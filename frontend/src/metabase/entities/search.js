@@ -15,8 +15,6 @@ import {
   CollectionsApi,
 } from "metabase/services";
 
-import { dissoc } from "icepick";
-
 function createPropertyFilter(property, text) {
   text = String(text || "").toLowerCase();
   if (text) {
@@ -62,7 +60,7 @@ export default createEntity({
       });
     },
   },
-  listSchema: new schema.Array(
+  schema: new schema.Union(
     {
       questions: QuestionSchema,
       dashboards: DashboardSchema,

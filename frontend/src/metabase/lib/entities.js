@@ -69,9 +69,6 @@ export function createEntity(def: EntityDefinition): Entity {
   if (!entity.schema) {
     entity.schema = new schema.Entity(entity.name);
   }
-  if (!entity.listSchema) {
-    entity.listSchema = [entity.schema];
-  }
   if (!entity.getName) {
     entity.getName = object => object.name;
   }
@@ -197,7 +194,7 @@ export function createEntity(def: EntityDefinition): Entity {
           getData: async () => {
             const { result, entities } = normalize(
               await entity.api.list(entityQuery || {}),
-              entity.listSchema,
+              [entity.schema],
             );
             return { result, entities, entityQuery };
           },
@@ -235,8 +232,7 @@ export function createEntity(def: EntityDefinition): Entity {
 
   const getList = createSelector(
     [getEntities, getEntityIds],
-    (entities, entityIds) =>
-      denormalize(entityIds, entity.listSchema, entities),
+    (entities, entityIds) => denormalize(entityIds, [entity.schema], entities),
   );
 
   // REQUEST STATE SELECTORS
