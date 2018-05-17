@@ -56,7 +56,10 @@ export default class Archive extends Component {
           setSearchText={this.props.setSearchText}
         />
         <div>
-          <EntityListLoader entityType="search" query={{ archived: true }}>
+          <EntityListLoader
+            entityType="search"
+            entityQuery={{ archived: true }}
+          >
             {({ list, reload }) =>
               list.filter(item => true).map(
                 item =>

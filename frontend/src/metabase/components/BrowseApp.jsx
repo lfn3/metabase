@@ -61,7 +61,7 @@ const TableListLoader = ({ children,  dbId }) =>
   <EntityObjectLoader
     entityType="databases"
     entityId={dbId}
-    query={{ include_tables: true }}
+    entityQuery={{ include_tables: true }}
     children={({ object }) => {
       console.log(object)
       return children({

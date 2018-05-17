@@ -20,33 +20,33 @@ export type RenderProps = {
 };
 
 @entityType()
-@connect((state, { entityDef, query }) => ({
-  list: entityDef.selectors.getList(state, { query }),
-  loading: entityDef.selectors.getLoading(state, { query }),
-  error: entityDef.selectors.getError(state, { query }),
+@connect((state, { entityDef, entityQuery }) => ({
+  list: entityDef.selectors.getList(state, { entityQuery }),
+  loading: entityDef.selectors.getLoading(state, { entityQuery }),
+  error: entityDef.selectors.getError(state, { entityQuery }),
 }))
 export default class EntitiesListLoader extends React.Component {
   props: Props;
 
   static defaultProps = {
     loadingAndErrorWrapper: true,
-    query: null,
+    entityQuery: null,
     reload: false,
   };
 
   componentWillMount() {
     // $FlowFixMe: provided by @connect
-    this.props.fetchList(this.props.query, this.props.reload);
+    this.props.fetchList(this.props.entityQuery, this.props.reload);
   }
 
   componentWillReceiveProps(nextProps: Props) {
-    if (!_.isEqual(nextProps.query, this.props.query)) {
-      nextProps.fetchList(nextProps.query, nextProps.reload);
+    if (!_.isEqual(nextProps.entityQuery, this.props.entityQuery)) {
+      nextProps.fetchList(nextProps.entityQuery, nextProps.reload);
     }
   }
 
   reload = () => {
-    this.props.fetchList(this.props.query, true);
+    this.props.fetchList(this.props.entityQuery, true);
   };
 
   renderChildren = () => {

@@ -87,8 +87,8 @@ export function createEntity(def: EntityDefinition): Entity {
     };
   }
 
-  function idForQuery(query) {
-    return JSON.stringify(query || null);
+  function idForQuery(entityQuery) {
+    return JSON.stringify(entityQuery || null);
   }
 
   // ACITON TYPES
@@ -100,8 +100,8 @@ export function createEntity(def: EntityDefinition): Entity {
 
   const getObjectStatePath = entityId => ["entities", entity.name, entityId];
 
-  const getListStatePath = query =>
-    ["entities", entity.name + "_list"].concat(idForQuery(query));
+  const getListStatePath = entityQuery =>
+    ["entities", entity.name + "_list"].concat(idForQuery(entityQuery));
 
   // ACTION CREATORS
   entity.actions = {
@@ -187,19 +187,19 @@ export function createEntity(def: EntityDefinition): Entity {
 
     fetchList: createThunkAction(
       FETCH_LIST_ACTION,
-      (query = null, reload = false) => (dispatch, getState) =>
+      (entityQuery = null, reload = false) => (dispatch, getState) =>
         fetchData({
           dispatch,
           getState,
           reload,
-          requestStatePath: getListStatePath(query),
-          existingStatePath: getListStatePath(query),
+          requestStatePath: getListStatePath(entityQuery),
+          existingStatePath: getListStatePath(entityQuery),
           getData: async () => {
             const { result, entities } = normalize(
-              await entity.api.list(query || {}),
+              await entity.api.list(entityQuery || {}),
               entity.listSchema,
             );
-            return { result, entities, query };
+            return { result, entities, entityQuery };
           },
         }),
     ),
@@ -221,7 +221,7 @@ export function createEntity(def: EntityDefinition): Entity {
 
   // LIST SELECTORS
 
-  const getEntityQuery = (state, props) => idForQuery(props.query);
+  const getEntityQueryId = (state, props) => idForQuery(props.entityQuery);
 
   const getEntityLists = createSelector(
     [getEntities],
@@ -229,8 +229,8 @@ export function createEntity(def: EntityDefinition): Entity {
   );
 
   const getEntityIds = createSelector(
-    [getEntityQuery, getEntityLists],
-    (query, lists) => lists[query],
+    [getEntityQueryId, getEntityLists],
+    (entityQueryId, lists) => lists[entityQueryId],
   );
 
   const getList = createSelector(
@@ -245,7 +245,7 @@ export function createEntity(def: EntityDefinition): Entity {
     const path =
       props.entityId != null
         ? getObjectStatePath(props.entityId)
-        : getListStatePath(props.query);
+        : getListStatePath(props.entityQuery);
     return getIn(state, ["requests", "states", ...path, "fetch"]);
   };
   const getLoading = createSelector(
@@ -285,10 +285,10 @@ export function createEntity(def: EntityDefinition): Entity {
       if (payload.result) {
         return {
           ...state,
-          [idForQuery(payload.query)]: payload.result,
+          [idForQuery(payload.entityQuery)]: payload.result,
         };
       }
-      // NOTE: only add/remove from the "default" list (no query)
+      // NOTE: only add/remove from the "default" list (no entityQuery)
       // TODO: just remove this entirely?
     } else if (type === CREATE_ACTION && state[""]) {
       return { ...state, "": state[""].concat([payload.result]) };
