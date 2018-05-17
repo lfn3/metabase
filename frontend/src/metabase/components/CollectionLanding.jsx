@@ -18,7 +18,6 @@ import CollectionItemsLoader from "metabase/components/CollectionItemsLoader";
 import CollectionEmptyState from "metabase/components/CollectionEmptyState";
 
 import EntityMenu from "metabase/components/EntityMenu";
-import LandingNav from "metabase/components/LandingNav";
 
 import Collections from "metabase/entities/collections";
 
@@ -244,7 +243,7 @@ class CollectionLanding extends React.Component {
                   {
                     title: t`View the archive`,
                     icon: "viewArchive",
-                    link: `/archive/`,
+                    link: `/archive`,
                   },
                 ]}
                 triggerIcon="burger"
@@ -253,7 +252,6 @@ class CollectionLanding extends React.Component {
           </Flex>
         </Box>
         <Box className="relative">
-          <LandingNav collectionId={collectionId} />
           <Box className="wrapper lg-wrapper--trim">
             <DefaultLanding collectionId={collectionId} />
             {

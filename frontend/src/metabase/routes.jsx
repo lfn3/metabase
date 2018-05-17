@@ -45,7 +45,7 @@ import PulseMoveModal from "metabase/pulse/components/PulseMoveModal";
 import SetupApp from "metabase/setup/containers/SetupApp.jsx";
 import PostSetupApp from "metabase/setup/containers/PostSetupApp.jsx";
 import UserSettingsApp from "metabase/user/containers/UserSettingsApp.jsx";
-
+import EntityPage from "metabase/components/EntityPage.jsx";
 // new question
 import {
   NewQuestionStart,
@@ -214,7 +214,8 @@ export const getRoutes = store => (
         <Route path="/explore" component={PostSetupApp} />
         <Route path="/explore/:databaseId" component={PostSetupApp} />
 
-        <Route path="search" component={SearchApp} />
+        <Route path="search" title={t`Search`} component={SearchApp} />
+        <Route path="archive" title={t`Archive`} component={Archive} />
 
         <Route path="collection/:collectionId" component={CollectionLanding}>
           <ModalRoute path="archive" modal={ArchiveCollectionModal} />
@@ -243,7 +244,7 @@ export const getRoutes = store => (
             />
           </Route>
         </Route>
-        <Route path="/question/:cardId" component={QueryBuilder} />
+        <Route path="/question/:cardId" component={EntityPage} />
 
         <Route path="/ready" component={PostSetupApp} />
 
@@ -262,8 +263,6 @@ export const getRoutes = store => (
         <Route path="permissions" component={CollectionPermissions} />
         <Route path=":collectionId" component={CollectionEdit} />
       </Route>
-
-      <Route path="/archive" title={t`Archive`} component={Archive} />
 
       {/* REFERENCE */}
       <Route path="/reference" title={`Data Reference`}>
