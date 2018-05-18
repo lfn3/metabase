@@ -12,12 +12,11 @@ import Card from "metabase/components/Card";
 import { Grid, GridItem } from "metabase/components/Grid";
 import Icon from "metabase/components/Icon";
 import Link from "metabase/components/Link";
-
-import CollectionListLoader from "metabase/components/CollectionListLoader";
-import CollectionItemsLoader from "metabase/components/CollectionItemsLoader";
 import CollectionEmptyState from "metabase/components/CollectionEmptyState";
-
 import EntityMenu from "metabase/components/EntityMenu";
+
+import CollectionListLoader from "metabase/containers/CollectionListLoader";
+import CollectionItemsLoader from "metabase/containers/CollectionItemsLoader";
 
 import Collections from "metabase/entities/collections";
 
