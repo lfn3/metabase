@@ -56,8 +56,15 @@ export default class EntitiesListLoader extends React.Component {
 
   renderChildren = () => {
     // $FlowFixMe: provided by @connect
-    const { children, list, loading, error } = this.props;
-    return children({ list, loading, error, reload: this.reload });
+    const { children, list, loading, error, entityDef } = this.props;
+    return children({
+      // alias the entities name:
+      [entityDef.name]: list,
+      list,
+      loading,
+      error,
+      reload: this.reload,
+    });
   };
 
   render() {

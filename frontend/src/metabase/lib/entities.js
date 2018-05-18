@@ -74,15 +74,18 @@ export function createEntity(def: EntityDefinition): Entity {
   }
 
   // API
-  if (!entity.api) {
-    entity.api = {
-      list: GET(`${entity.path}`),
-      create: POST(`${entity.path}`),
-      get: GET(`${entity.path}/:id`),
-      update: PUT(`${entity.path}/:id`),
-      delete: DELETE(`${entity.path}/:id`),
-    };
-  }
+  entity.api = {
+    ...(entity.path
+      ? {
+          list: GET(`${entity.path}`),
+          create: POST(`${entity.path}`),
+          get: GET(`${entity.path}/:id`),
+          update: PUT(`${entity.path}/:id`),
+          delete: DELETE(`${entity.path}/:id`),
+        }
+      : {}),
+    ...entity.api,
+  };
 
   function idForQuery(entityQuery) {
     return JSON.stringify(entityQuery || null);
@@ -218,7 +221,8 @@ export function createEntity(def: EntityDefinition): Entity {
 
   // LIST SELECTORS
 
-  const getEntityQueryId = (state, props) => idForQuery(props.entityQuery);
+  const getEntityQueryId = (state, props) =>
+    idForQuery(props && props.entityQuery);
 
   const getEntityLists = createSelector(
     [getEntities],

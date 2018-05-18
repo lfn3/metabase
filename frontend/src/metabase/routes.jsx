@@ -29,6 +29,7 @@ import AutomaticDashboardApp from "metabase/dashboard/containers/AutomaticDashbo
 import {
   BrowseApp,
   DatabaseBrowser,
+  SchemaBrowser,
   TableBrowser,
 } from "metabase/components/BrowseApp";
 
@@ -250,7 +251,8 @@ export const getRoutes = store => (
 
         <Route path="browse" component={BrowseApp}>
           <IndexRoute component={DatabaseBrowser} />
-          <Route path=":dbId" component={TableBrowser} />
+          <Route path=":dbId" component={SchemaBrowser} />
+          <Route path=":dbId/schema/:schemaName" component={TableBrowser} />
         </Route>
 
         {/* INDIVIDUAL DASHBOARDS */}
