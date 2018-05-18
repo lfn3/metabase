@@ -158,7 +158,7 @@ export class DatabaseBrowser extends React.Component {
 
 const BrowserCrumbs = ({ crumbs }) => (
   <Flex align="center">
-    {crumbs.filter(c => c).map((crumb, index) => [
+    {crumbs.filter(c => c).map((crumb, index, crumbs) => [
       crumb.to ? (
         <Link key={"title" + index} to={crumb.to}>
           <BrowseHeader>{crumb.title}</BrowseHeader>

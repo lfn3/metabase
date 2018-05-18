@@ -45,71 +45,67 @@ export default class Archive extends Component {
           searchText={this.props.searchText}
           setSearchText={this.props.setSearchText}
         />
-        <div>
-          <EntityListLoader
-            entityType="search"
-            entityQuery={{ archived: true }}
-          >
-            {({ list, reload }) =>
-              list.filter(item => true).map(
-                item =>
-                  item.type === "collection" ? (
-                    <ArchivedItem
-                      key={item.type + item.id}
-                      name={item.name}
-                      type="collection"
-                      icon="collection"
-                      color={item.color}
-                      isAdmin={isAdmin}
-                      onUnarchive={async () => {
-                        await this.props.setCollectionArchived(item.id, false);
-                        reload();
-                      }}
-                    />
-                  ) : item.type === "question" ? (
-                    <ArchivedItem
-                      key={item.type + item.id}
-                      name={item.name}
-                      type="question"
-                      icon={visualizations.get(item.display).iconName}
-                      isAdmin={isAdmin}
-                      onUnarchive={async () => {
-                        await this.props.setQuestionArchived(
-                          item.id,
-                          false,
-                          true,
-                        );
-                        reload();
-                      }}
-                    />
-                  ) : item.type === "dashboard" ? (
-                    <ArchivedItem
-                      key={item.type + item.id}
-                      name={item.name}
-                      type="dashboard"
-                      icon="dashboard"
-                      isAdmin={isAdmin}
-                      onUnarchive={async () => {
-                        await this.props.setDashboardArchived(
-                          item.id,
-                          false,
-                          true,
-                        );
-                        reload();
-                      }}
-                    />
-                  ) : (
-                    <ArchivedItem
-                      key={item.type + item.id}
-                      name={item.name}
-                      type="unknown"
-                      icon="unknown"
-                    />
-                  ),
-              )
-            }
-          </EntityListLoader>
-        </div>
+        <EntityListLoader entityType="search" entityQuery={{ archived: true }}>
+          {({ list, reload }) =>
+            list.filter(item => true).map(
+              item =>
+                item.type === "collection" ? (
+                  <ArchivedItem
+                    key={item.type + item.id}
+                    name={item.name}
+                    type="collection"
+                    icon="collection"
+                    color={item.color}
+                    isAdmin={isAdmin}
+                    onUnarchive={async () => {
+                      await this.props.setCollectionArchived(item.id, false);
+                      reload();
+                    }}
+                  />
+                ) : item.type === "question" ? (
+                  <ArchivedItem
+                    key={item.type + item.id}
+                    name={item.name}
+                    type="question"
+                    icon={visualizations.get(item.display).iconName}
+                    isAdmin={isAdmin}
+                    onUnarchive={async () => {
+                      console.log("unarchive");
+                      await this.props.setQuestionArchived(
+                        item.id,
+                        false,
+                        true,
+                      );
+                      reload();
+                    }}
+                  />
+                ) : item.type === "dashboard" ? (
+                  <ArchivedItem
+                    key={item.type + item.id}
+                    name={item.name}
+                    type="dashboard"
+                    icon="dashboard"
+                    isAdmin={isAdmin}
+                    onUnarchive={async () => {
+                      await this.props.setDashboardArchived(
+                        item.id,
+                        false,
+                        true,
+                      );
+                      reload();
+                    }}
+                  />
+                ) : (
+                  <ArchivedItem
+                    key={item.type + item.id}
+                    name={item.name}
+                    type="unknown"
+                    icon="unknown"
+                  />
+                ),
+            )
+          }
+        </EntityListLoader>
       </div>
     );
   }
