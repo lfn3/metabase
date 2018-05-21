@@ -5,9 +5,20 @@ import { normal, getRandomColor } from "metabase/lib/colors";
 
 import { t } from "c-3po";
 
-export default createEntity({
+const Collections = createEntity({
   name: "collections",
   path: "/api/collection",
+
+  objectActions: {
+    setArchived: ({ id }, archived) =>
+      Collections.actions.update({ id, archived }),
+    setCollection: ({ id }, collection) =>
+      Collections.actions.update({
+        id,
+        collection_id: collection && collection.id,
+      }),
+  },
+
   form: {
     fields: [
       {
@@ -32,3 +43,5 @@ export default createEntity({
     ],
   },
 });
+
+export default Collections;

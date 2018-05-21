@@ -6,19 +6,20 @@ import Button from "metabase/components/Button";
 import Icon from "metabase/components/Icon";
 import Tooltip from "metabase/components/Tooltip";
 
-import { setCollectionArchived } from "../collections";
-
-const mapStateToProps = (state, props) => ({});
+import Collections from "metabase/entities/collections";
 
 const mapDispatchToProps = {
-  setCollectionArchived,
+  setCollectionArchived: Collections.actions.setArchived,
 };
 
 @connect(mapStateToProps, mapDispatchToProps)
 export default class ArchiveCollectionWidget extends Component {
   _onArchive = async () => {
     try {
-      await this.props.setCollectionArchived(this.props.collectionId, true);
+      await this.props.setCollectionArchived(
+        { id: this.props.collectionId },
+        true,
+      );
       this._onClose();
       if (this.props.onArchived) {
         this.props.onArchived();

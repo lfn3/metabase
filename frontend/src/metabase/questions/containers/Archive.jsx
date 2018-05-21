@@ -6,106 +6,91 @@ import HeaderWithBack from "metabase/components/HeaderWithBack";
 import SearchHeader from "metabase/components/SearchHeader";
 import ArchivedItem from "../../components/ArchivedItem";
 
-import EntityListLoader from "metabase/entities/containers/EntityListLoader";
+import { entityListLoader } from "metabase/entities/containers/EntityListLoader";
+import listSearch from "metabase/hoc/ListSearch";
 
-import {
-  setArchived as setQuestionArchived,
-  setSearchText,
-} from "../questions";
-import { setCollectionArchived } from "../collections";
-import { getSearchText } from "../selectors";
 import { getUserIsAdmin } from "metabase/selectors/user";
 
-import { setArchived as setDashboardArchived } from "metabase/dashboards/dashboards";
+import Questions from "metabase/entities/questions";
+import Collections from "metabase/entities/collections";
+import Dashboards from "metabase/entities/dashboards";
 
 import visualizations from "metabase/visualizations";
 
 const mapStateToProps = (state, props) => ({
-  searchText: getSearchText(state, props),
   isAdmin: getUserIsAdmin(state, props),
 });
 
 const mapDispatchToProps = {
-  setSearchText,
-  setQuestionArchived,
-  setCollectionArchived,
-  setDashboardArchived,
+  setQuestionArchived: Questions.actions.setArchived,
+  setCollectionArchived: Collections.actions.setArchived,
+  setDashboardArchived: Dashboards.actions.setArchived,
 };
 
+@entityListLoader({
+  entityType: "search",
+  entityQuery: { archived: true },
+  reload: true,
+})
+@listSearch()
 @connect(mapStateToProps, mapDispatchToProps)
 export default class Archive extends Component {
   render() {
-    const { isAdmin } = this.props;
+    const { isAdmin, list, reload, searchText, onSetSearchText } = this.props;
     return (
       <div className="px4 pt3">
         <div className="flex align-center mb2">
           <HeaderWithBack name={t`Archive`} />
         </div>
-        <SearchHeader
-          searchText={this.props.searchText}
-          setSearchText={this.props.setSearchText}
-        />
-        <EntityListLoader entityType="search" entityQuery={{ archived: true }}>
-          {({ list, reload }) =>
-            list.filter(item => true).map(
-              item =>
-                item.type === "collection" ? (
-                  <ArchivedItem
-                    key={item.type + item.id}
-                    name={item.name}
-                    type="collection"
-                    icon="collection"
-                    color={item.color}
-                    isAdmin={isAdmin}
-                    onUnarchive={async () => {
-                      await this.props.setCollectionArchived(item.id, false);
-                      reload();
-                    }}
-                  />
-                ) : item.type === "question" ? (
-                  <ArchivedItem
-                    key={item.type + item.id}
-                    name={item.name}
-                    type="question"
-                    icon={visualizations.get(item.display).iconName}
-                    isAdmin={isAdmin}
-                    onUnarchive={async () => {
-                      console.log("unarchive");
-                      await this.props.setQuestionArchived(
-                        item.id,
-                        false,
-                        true,
-                      );
-                      reload();
-                    }}
-                  />
-                ) : item.type === "dashboard" ? (
-                  <ArchivedItem
-                    key={item.type + item.id}
-                    name={item.name}
-                    type="dashboard"
-                    icon="dashboard"
-                    isAdmin={isAdmin}
-                    onUnarchive={async () => {
-                      await this.props.setDashboardArchived(
-                        item.id,
-                        false,
-                        true,
-                      );
-                      reload();
-                    }}
-                  />
-                ) : (
-                  <ArchivedItem
-                    key={item.type + item.id}
-                    name={item.name}
-                    type="unknown"
-                    icon="unknown"
-                  />
-                ),
-            )
-          }
-        </EntityListLoader>
+        <SearchHeader searchText={searchText} setSearchText={onSetSearchText} />
+        {list.map(
+          item =>
+            item.type === "collection" ? (
+              <ArchivedItem
+                key={item.type + item.id}
+                name={item.name}
+                type="collection"
+                icon="collection"
+                color={item.color}
+                isAdmin={isAdmin}
+                onUnarchive={async () => {
+                  await this.props.setCollectionArchived(item, false);
+                  reload();
+                }}
+              />
+            ) : item.type === "question" ? (
+              <ArchivedItem
+                key={item.type + item.id}
+                name={item.name}
+                type="question"
+                icon={visualizations.get(item.display).iconName}
+                isAdmin={isAdmin}
+                onUnarchive={async () => {
+                  await this.props.setQuestionArchived(item, false);
+                  reload();
+                }}
+              />
+            ) : item.type === "dashboard" ? (
+              <ArchivedItem
+                key={item.type + item.id}
+                name={item.name}
+                type="dashboard"
+                icon="dashboard"
+                isAdmin={isAdmin}
+                onUnarchive={async () => {
+                  await this.props.setDashboardArchived(item, false);
+                  reload();
+                }}
+              />
+            ) : (
+              <ArchivedItem
+                key={item.type + item.id}
+                name={item.name}
+                type="unknown"
+                icon="unknown"
+              />
+            ),
+        )}
       </div>
     );
   }

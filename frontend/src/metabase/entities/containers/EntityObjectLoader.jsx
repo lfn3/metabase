@@ -45,8 +45,12 @@ export default class EntitiesObjectLoader extends React.Component {
   }
   renderChildren = () => {
     // $FlowFixMe: provided by @connect
-    const { children, object, loading, error } = this.props;
-    return children({ object, loading, error, remove: this._remove });
+    const { children, entityDef, ...props } = this.props;
+    return children({
+      ...props,
+      reload: this.reload,
+      remove: this.remove,
+    });
   };
   render() {
     // $FlowFixMe: provided by @connect
@@ -62,7 +66,11 @@ export default class EntitiesObjectLoader extends React.Component {
     );
   }
 
-  _remove = () => {
+  reload = () => {
+    return this.props.fetch({ id: this.props.entityId }, true);
+  };
+
+  remove = () => {
     // $FlowFixMe: provided by @connect
     return this.props.delete(this.props.object);
   };

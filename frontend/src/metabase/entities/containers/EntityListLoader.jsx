@@ -28,7 +28,7 @@ export type RenderProps = {
   loading: entityDef.selectors.getLoading(state, { entityQuery }),
   error: entityDef.selectors.getError(state, { entityQuery }),
 }))
-export default class EntitiesListLoader extends React.Component {
+export default class EntityListLoader extends React.Component {
   props: Props;
 
   static defaultProps = {
@@ -49,20 +49,13 @@ export default class EntitiesListLoader extends React.Component {
     }
   }
 
-  reload = () => {
-    // $FlowFixMe: provided by @connect
-    this.props.fetchList(this.props.entityQuery, true);
-  };
-
   renderChildren = () => {
     // $FlowFixMe: provided by @connect
-    const { children, list, loading, error, entityDef } = this.props;
+    const { children, entityDef, ...props } = this.props;
     return children({
+      ...props,
       // alias the entities name:
-      [entityDef.name]: list,
-      list,
-      loading,
-      error,
+      [entityDef.name]: props.list,
       reload: this.reload,
     });
   };
@@ -80,4 +73,15 @@ export default class EntitiesListLoader extends React.Component {
       this.renderChildren()
     );
   }
+
+  reload = () => {
+    // $FlowFixMe: provided by @connect
+    return this.props.fetchList(this.props.entityQuery, true);
+  };
 }
+
+export const entityListLoader = ellProps => ComposedComponent => props => (
+  <EntityListLoader {...ellProps}>
+    {childProps => <ComposedComponent {...props} {...childProps} />}
+  </EntityListLoader>
+);
