@@ -38,17 +38,18 @@
 ;;; Helpers
 
 (def ^:const card-defaults
-  {:archived          false
-   :collection_id     nil
-   :description       nil
-   :display           "scalar"
-   :enable_embedding  false
-   :embedding_params  nil
-   :made_public_by_id nil
-   :public_uuid       nil
-   :query_type        "query"
-   :cache_ttl         nil
-   :result_metadata   nil})
+  {:archived            false
+   :collection_id       nil
+   :collection_position nil
+   :description         nil
+   :display             "scalar"
+   :enable_embedding    false
+   :embedding_params    nil
+   :made_public_by_id   nil
+   :public_uuid         nil
+   :query_type          "query"
+   :cache_ttl           nil
+   :result_metadata     nil})
 
 (defn- do-with-self-cleaning-random-card-name
   "Generate a random card name (or use CARD-NAME), pass it to F, then delete any Cards with that name afterwords."
@@ -71,11 +72,14 @@
    :type     "query"
    :query    {:source-table table-id, :aggregation {:aggregation-type "count"}}})
 
-(defn- card-with-name-and-query [card-name query]
-  {:name                   card-name
-   :display                "scalar"
-   :dataset_query          query
-   :visualization_settings {:global {:title nil}}})
+(defn- card-with-name-and-query
+  ([card-name]
+   (card-with-name-and-query card-name (mbql-count-query (data/id) (data/id :venues))))
+  ([card-name query]
+   {:name                   card-name
+    :display                "scalar"
+    :dataset_query          query
+    :visualization_settings {:global {:title nil}}}))
 
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
@@ -246,7 +250,7 @@
     (with-self-cleaning-random-card-name [card-name]
       ;; create a card with the metadata
       ((user->client :rasta) :post 200 "card"
-       (assoc (card-with-name-and-query card-name (mbql-count-query (data/id) (data/id :venues)))
+       (assoc (card-with-name-and-query card-name)
          :result_metadata    metadata
          :metadata_checksum  (#'results-metadata/metadata-checksum metadata)))
       ;; now check the metadata that was saved in the DB
@@ -265,11 +269,32 @@
     (with-self-cleaning-random-card-name [card-name]
       ;; create a card with the metadata
       ((user->client :rasta) :post 200 "card"
-       (assoc (card-with-name-and-query card-name (mbql-count-query (data/id) (data/id :venues)))
+       (assoc (card-with-name-and-query card-name)
          :result_metadata    metadata
          :metadata_checksum  "ABCDEF")) ; bad checksum
       ;; now check the correct metadata was fetched and was saved in the DB
       (db/select-one-field :result_metadata Card :name card-name))))
+
+;; Make sure we can create a Card with a Collection position
+(expect
+ #metabase.models.card.CardInstance{:collection_id true, :collection_position 1000}
+ (with-self-cleaning-random-card-name [card-name]
+   (tt/with-temp Collection [collection]
+     (perms/grant-collection-readwrite-permissions! (perms-group/all-users) collection)
+     ((user->client :rasta) :post 200 "card" (assoc (card-with-name-and-query card-name)
+                                               :collection_id (u/get-id collection), :collection_position 1000))
+     (some-> (db/select-one [Card :collection_id :collection_position] :name card-name)
+             (update :collection_id (partial = (u/get-id collection)))))))
+
+;; ...but not if we don't have permissions for the Collection
+(expect
+ nil
+ (with-self-cleaning-random-card-name [card-name]
+   (tt/with-temp Collection [collection]
+     ((user->client :rasta) :post 403 "card" (assoc (card-with-name-and-query card-name)
+                                               :collection_id (u/get-id collection), :collection_position 1000))
+     (some-> (db/select-one [Card :collection_id :collection_position] :name card-name)
+             (update :collection_id (partial = (u/get-id collection)))))))
 
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
@@ -428,6 +453,33 @@
         :metadata_checksum  "ABC123"})  ; invalid checksum
       ;; now check the metadata that was saved in the DB
       (db/select-one-field :result_metadata Card :id (u/get-id card)))))
+
+;; Can we change the Collection position of a Card?
+(expect
+ 1000
+ (tt/with-temp* [Collection [collection]
+                 Card       [card {:collection_id collection}]]
+   (perms/grant-collection-readwrite-permissions! (perms-group/all-users) collection)
+   ((user->client :rasta) :put 200 (str "card/" (u/get-id card))
+    {:collection_position 1000})
+   (db/select-one-field :collection_position Card :id (u/get-id card))))
+
+;; ...we shouldn't be able to if we don't have permissions for the Collection
+(expect
+ (tt/with-temp* [Collection [collection]
+                 Card       [card {:collection_id collection}]]
+   ((user->client :rasta) :put 200 (str "card/" (u/get-id card))
+    {:collection_position 1000})
+   (db/select-one-field :collection_position Card :id (u/get-id card))))
+
+;; ...but specifying the value (if it isn't changed) should be ok even with no permissions for the Collection
+(expect
+ 1000
+ (tt/with-temp* [Collection [collection]
+                 Card       [card {:collection_id collection, :collection_position 1000}]]
+   ((user->client :rasta) :put 200 (str "card/" (u/get-id card))
+    {:collection_position 1000})
+   (db/select-one-field :collection_position Card :id (u/get-id card))))
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
 ;;; |                                        Card updates that impact alerts                                         |

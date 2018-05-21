@@ -213,3 +213,23 @@
   (when (and collection-or-id
              (not= (u/get-id collection-or-id) (:collection_id object)))
     (check-write-perms-for-collection collection-or-id)))
+
+(defn check-allowed-to-change-position-in-collection
+  "If we're changing the `collection_position` of an object, make sure that we have permissions to make the change, or
+  throw a 403."
+  [object-before-update object-updates]
+  ;; If collection_position was specified in the API request `body`, that means we want to change it
+  (when (contains? object-updates :collection_position)
+    (let [orig-position     (:collection_position object-before-update)
+          new-position      (:collection_position object-updates)
+          new-collection-id (if (contains? object-updates :collection_id)
+                              (:collection_id object-updates)
+                              (:collection_id object-before-update))]
+      ;; check to make sure its position is actually going to be changed before doing any further checks
+      (when (not= orig-position new-position)
+        ;; ok, make sure we have permissions to edit the Collection this object is going to be in before changing the
+        ;; position
+        ;;
+        ;; TODO - there's nothing to do here for objects in the Root Collection until the Root Collections Perms
+        ;; branch gets merged. Once that happens, we will need to add in the appropriate perms checks here !
+        (check-write-perms-for-collection new-collection-id)))))

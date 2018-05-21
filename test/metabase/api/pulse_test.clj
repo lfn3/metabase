@@ -44,16 +44,17 @@
 
 (defn- pulse-details [pulse]
   (tu/match-$ pulse
-    {:id            $
-     :name          $
-     :created_at    $
-     :updated_at    $
-     :creator_id    $
-     :creator       (user-details (db/select-one 'User :id (:creator_id pulse)))
-     :cards         (map pulse-card-details (:cards pulse))
-     :channels      (map pulse-channel-details (:channels pulse))
-     :collection_id $
-     :skip_if_empty $}))
+    {:id                  $
+     :name                $
+     :created_at          $
+     :updated_at          $
+     :creator_id          $
+     :creator             (user-details (db/select-one 'User :id (:creator_id pulse)))
+     :cards               (map pulse-card-details (:cards pulse))
+     :channels            (map pulse-channel-details (:channels pulse))
+     :collection_id       $
+     :collection_position $
+     :skip_if_empty       $}))
 
 (defn- pulse-response [{:keys [created_at updated_at], :as pulse}]
   (-> pulse
@@ -120,10 +121,11 @@
     (dissoc channel :id :pulse_id :created_at :updated_at)))
 
 (def ^:private pulse-defaults
-  {:created_at    true
-   :updated_at    true
-   :skip_if_empty false
-   :collection_id nil})
+  {:collection_id       nil
+   :collection_position nil
+   :created_at          true
+   :skip_if_empty       false
+   :updated_at          true})
 
 (tt/expect-with-temp [Card [card-1]
                       Card [card-2]]
